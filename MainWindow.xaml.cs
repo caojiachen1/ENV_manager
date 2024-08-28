@@ -208,7 +208,35 @@ namespace EnvVarViewer
             if (EnvVarListBox.SelectedItem != null)
             {
                 string selectedVar = EnvVarListBox.SelectedItem.ToString();
-                if (userEnvVars.ContainsKey(selectedVar) || systemEnvVars.ContainsKey(selectedVar) || modifiedEnvVars.ContainsKey(selectedVar))
+                if (selectedVar.ToLower() == "path")
+                {
+                    var result = MessageBox.Show("Do you want to modify the User or System Path?", "Select Scope", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        // Modify User Path
+                        string userPath = userEnvVars.ContainsKey(selectedVar) ? userEnvVars[selectedVar] : null;
+                        var modifyPathWindow = new ModifyPathWindow(userPath, true);
+                        modifyPathWindow.PathModified += (s, ev) =>
+                        {
+                            userEnvVars[selectedVar] = modifyPathWindow.GetPathValue();
+                            UpdateListBox();
+                        };
+                        modifyPathWindow.ShowDialog();
+                    }
+                    else if (result == MessageBoxResult.No)
+                    {
+                        // Modify System Path
+                        string systemPath = systemEnvVars.ContainsKey(selectedVar) ? systemEnvVars[selectedVar] : null;
+                        var modifyPathWindow = new ModifyPathWindow(systemPath, false);
+                        modifyPathWindow.PathModified += (s, ev) =>
+                        {
+                            systemEnvVars[selectedVar] = modifyPathWindow.GetPathValue();
+                            UpdateListBox();
+                        };
+                        modifyPathWindow.ShowDialog();
+                    }
+                }
+                else
                 {
                     string value = modifiedEnvVars.ContainsKey(selectedVar) ? modifiedEnvVars[selectedVar] :
                                    userEnvVars.ContainsKey(selectedVar) ? userEnvVars[selectedVar] : systemEnvVars[selectedVar];
@@ -218,10 +246,6 @@ namespace EnvVarViewer
                         UpdateListBox();
                     };
                     modifyWindow.ShowDialog();
-                }
-                else
-                {
-                    StatusLabel.Text = $"Environment variable {selectedVar} not found";
                 }
             }
         }

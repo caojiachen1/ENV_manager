@@ -1,0 +1,33 @@
+﻿<Window x:Class="EnvVarViewer.ModifyPathWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Modify Path" Height="300" Width="400"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Path ListBox -->
+        <ListBox Name="PathListBox" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" />
+
+        <!-- New Path TextBox -->
+        <TextBox Name="NewPathTextBox" Grid.Row="1" Grid.Column="0" Margin="10,0,10,10" />
+
+        <!-- Add Button -->
+        <Button Name="AddButton" Grid.Row="1" Grid.Column="1" Margin="0,0,10,10" Width="50" Click="AddButton_Click">Add</Button>
+
+        <!-- Remove Button -->
+        <Button Name="RemoveButton" Grid.Row="1" Grid.Column="2" Margin="0,0,10,10" Width="60" Click="RemoveButton_Click">Remove</Button>
+
+        <!-- Save Button -->
+        <Button Name="SaveButton" Grid.Row="2" Grid.Column="2" Margin="0,10,10,10" Width="60" Click="SaveButton_Click">Save</Button>
+    </Grid>
+</Window>
