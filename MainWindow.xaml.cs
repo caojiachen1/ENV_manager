@@ -7,6 +7,7 @@ using System.Security.Principal;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using YourNamespace;
 
 namespace EnvVarViewer
 {
@@ -210,31 +211,32 @@ namespace EnvVarViewer
                 string selectedVar = EnvVarListBox.SelectedItem.ToString();
                 if (selectedVar.ToLower() == "path")
                 {
-                    var result = MessageBox.Show("Do you want to modify the User or System Path?", "Select Scope", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (result == MessageBoxResult.Yes)
+                    var selectScopeWindow = new SelectScopeWindow();
+                    selectScopeWindow.UserSelected += (s, ev) =>
                     {
                         // Modify User Path
                         string userPath = userEnvVars.ContainsKey(selectedVar) ? userEnvVars[selectedVar] : null;
                         var modifyPathWindow = new ModifyPathWindow(userPath, true);
-                        modifyPathWindow.PathModified += (s, ev) =>
+                        modifyPathWindow.PathModified += (ss, se) =>
                         {
                             userEnvVars[selectedVar] = modifyPathWindow.GetPathValue();
                             UpdateListBox();
                         };
                         modifyPathWindow.ShowDialog();
-                    }
-                    else if (result == MessageBoxResult.No)
+                    };
+                    selectScopeWindow.SystemSelected += (s, ev) =>
                     {
                         // Modify System Path
                         string systemPath = systemEnvVars.ContainsKey(selectedVar) ? systemEnvVars[selectedVar] : null;
                         var modifyPathWindow = new ModifyPathWindow(systemPath, false);
-                        modifyPathWindow.PathModified += (s, ev) =>
+                        modifyPathWindow.PathModified += (ss, se) =>
                         {
                             systemEnvVars[selectedVar] = modifyPathWindow.GetPathValue();
                             UpdateListBox();
                         };
                         modifyPathWindow.ShowDialog();
-                    }
+                    };
+                    selectScopeWindow.ShowDialog();
                 }
                 else
                 {
@@ -249,7 +251,6 @@ namespace EnvVarViewer
                 }
             }
         }
-
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
             if (EnvVarListBox.SelectedItem != null)

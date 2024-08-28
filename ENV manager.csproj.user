@@ -13,12 +13,18 @@
     <Compile Update="ModifyPathWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="SelectScopeWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Update="MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="ModifyPathWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="SelectScopeWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
