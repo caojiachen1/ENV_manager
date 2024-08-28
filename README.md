@@ -1,2 +1,2 @@
-# Env_viewer
-Enviroment variable viewer
+# ENV manager
+Enviroment variable manager
