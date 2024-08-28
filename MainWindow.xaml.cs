@@ -17,6 +17,7 @@ namespace EnvVarViewer
         {
             InitializeComponent();
             LoadEnvVars();
+            SearchBox.Focus(); // Set focus to the search box after initialization
         }
 
         private void LoadEnvVars()
