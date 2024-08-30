@@ -5,7 +5,7 @@ using System.Windows.Controls;
 
 namespace EnvVarViewer
 {
-    public partial class AddModifyEnvVarWindow : Window
+    public partial class AddModifyEnvVarWindow : Wpf.Ui.Controls.FluentWindow
     {
         private Dictionary<string, string> userEnvVars;
         private Dictionary<string, string> systemEnvVars;

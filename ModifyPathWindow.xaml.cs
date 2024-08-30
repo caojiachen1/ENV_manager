@@ -5,7 +5,7 @@ using System.Windows.Controls;
 
 namespace EnvVarViewer
 {
-    public partial class ModifyPathWindow : Window
+    public partial class ModifyPathWindow : Wpf.Ui.Controls.FluentWindow
     {
         private List<string> pathEntries;
         private bool isUserPath;

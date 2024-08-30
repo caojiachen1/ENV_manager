@@ -3,7 +3,7 @@ using System.Windows;
 
 namespace YourNamespace
 {
-    public partial class SelectScopeWindow : Window
+    public partial class SelectScopeWindow : Wpf.Ui.Controls.FluentWindow
     {
         public event RoutedEventHandler UserSelected;
         public event RoutedEventHandler SystemSelected;
