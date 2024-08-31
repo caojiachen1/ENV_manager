@@ -25,6 +25,9 @@ jobs:
     - name: Publish
       run: dotnet publish -c Release -o ./publish
 
+    - name: Zip publish directory
+      run: 7z a publish.zip ./publish/*
+
     - name: Generate Release Body
       id: generate_release_body
       run: |
@@ -36,18 +39,17 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.extract_tag.outputs.tag_name || 'default-tag-name' }}
-        release_name: Release ${{ steps.extract_tag.outputs.tag_name || 'default-tag-name' }}
+        tag_name: ${{ steps.tag.outputs.name }}
         body: ${{ steps.generate_release_body.outputs.body }}
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset
+    - name: Upload Release
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./publish
-        asset_name: myapp-release.zip
+        upload_url: ${{ steps.get_release.outputs.upload_url }}
+        asset_path: ./publish.zip
+        asset_name: env_manager_release.zip
         asset_content_type: application/zip
