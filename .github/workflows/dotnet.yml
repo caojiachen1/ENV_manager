@@ -33,27 +33,34 @@ jobs:
       run: |
         echo "body=$(git log -1 --pretty=format:'%B')" >> $GITHUB_OUTPUT
     
-    - name: Determine tag name
-      id: tag
-      shell: bash
-      run: |
-        BUILD_NUMBER="$(git rev-list --count HEAD)"
-        SHORT_HASH="$(git rev-parse --short=7 HEAD)"
-        if [[ "${{ env.BRANCH_NAME }}" == "master" ]]; then
-          echo "name=b${BUILD_NUMBER}" >> $GITHUB_OUTPUT
-        else
-          SAFE_NAME=$(echo "${{ env.BRANCH_NAME }}" | tr '/' '-')
-          echo "name=${SAFE_NAME}-b${BUILD_NUMBER}-${SHORT_HASH}" >> $GITHUB_OUTPUT
-        fi
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 50  # 获取足够的提交历史记录以找到最近的标签
 
+    - name: Get previous tag
+      id: prev-tag
+      run: |
+        echo "::set-output name=tag::$(git describe --tags $(git rev-list --tags --max-count=1))"
+
+    - name: Bump version
+      id: bump
+      run: |
+        # 解析当前版本号
+        IFS='.' read -r -a version <<< "${{ steps.prev-tag.outputs.tag }}"
+        # 增加次版本号
+        ((version[1]++))
+        # 设置输出变量
+        echo "::set-output name=new_version::${version[0]}.${version[1]}.0"
+    
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.tag.outputs.name }}
-        body: ${{ steps.generate_release_body.outputs.body }}
+        tag_name: ${{ steps.bump.outputs.new_version }}
+        message: 'Release ${{ steps.bump.outputs.new_version }}'
         draft: false
         prerelease: false
 
