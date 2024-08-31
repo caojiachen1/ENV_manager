@@ -19,11 +19,11 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore --warnaserror false
+      run: dotnet build --no-restore
     - name: Test
-      run: dotnet test --no-build --verbosity normal --warnaserror false
+      run: dotnet test --no-build --verbosity normal
     - name: Publish
-      run: dotnet publish -c Release -o ./publish --warnaserror false
+      run: dotnet publish -c Release -o ./publish
 
     - name: Zip publish directory
       run: 7z a publish.zip ./publish/*
