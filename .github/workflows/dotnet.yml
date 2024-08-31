@@ -17,7 +17,7 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore > /dev/null 2>&1
+      run: dotnet restore
     - name: Build
       run: dotnet build --no-restore --warnaserror false
     - name: Test
