@@ -52,7 +52,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Text="Search:" Foreground="White" Grid.Column="0" HorizontalAlignment="Left" Margin="10,10,0,10" Width="50"/>
-            <ui:TextBox x:Name="SearchBox" PlaceholderText="Search..." TextWrapping="Wrap" VerticalAlignment="Center" TextChanged="SearchBox_TextChanged" Grid.Column="1" Grid.ColumnSpan="1" Margin="10,0,10,0"/>
+            <ui:TextBox x:Name="SearchBox" PlaceholderText="Search..." VerticalAlignment="Center" TextChanged="SearchBox_TextChanged" Grid.Column="1" Grid.ColumnSpan="1" Margin="10,0,10,0"/>
             <ui:Button Content="Refresh" Click="RefreshButton_Click" Grid.Column="2" VerticalAlignment="Stretch" Margin="10,0,10,0" Width="70" Height="35"/>
             <ui:Button Content="Export" Click="ExportButton_Click" Grid.Column="3" VerticalAlignment="Stretch" Margin="10,0,10,0" Width="70" Height="35"/>
             <ui:Button Content="Add" Click="AddButton_Click" Grid.Column="4" Margin="10,0,10,0" Width="70" Height="35"/>
@@ -64,8 +64,8 @@
         <ListBox x:Name="EnvVarListBox" Grid.Row="2" Grid.Column="0" 
                  SelectionChanged="EnvVarListBox_SelectionChanged" 
                  MouseDoubleClick="EnvVarListBox_MouseDoubleClick" 
-                 HorizontalAlignment="Left" 
-                 Width="310" Margin="10,10,0,19"/>
+                 HorizontalAlignment="Stretch" 
+                 Margin="10,10,0,20"/>
 
         <!-- TreeView for Environment Variables -->
         <TreeView x:Name="EnvVarTreeView" Grid.Row="2" Grid.Column="1" Margin="10,10,10,10" AllowDrop="True">

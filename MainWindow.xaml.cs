@@ -7,8 +7,9 @@ using System.Security.Principal;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using YourNamespace;
 using Wpf.Ui.Appearance;
+using System.Security.AccessControl;
+using System.Collections.Generic;
 //using Wpf.Ui.Controls;
 
 namespace EnvVarViewer
@@ -24,15 +25,13 @@ namespace EnvVarViewer
         {
             InitializeComponent();
             ApplicationThemeManager.Apply(ApplicationTheme.Dark, Wpf.Ui.Controls.WindowBackdropType.Mica, true);
-            //if (!IsAdministrator())
-            //{
-            //    Elevate();
-            //    System.Windows.Application.Current.Shutdown();
-            //}
+            Elevate();
             modifiedEnvVars = new Dictionary<string, string>();
             deletedEnvVars = new HashSet<string>();
             LoadEnvVars();
             SearchBox.Focus(); // Set focus to the search box after initialization
+            
+            EnvVarTreeView.MouseDoubleClick += EnvVarTreeView_MouseDoubleClick;
         }
 
         private bool IsAdministrator()
@@ -44,12 +43,17 @@ namespace EnvVarViewer
 
         private void Elevate()
         {
-            var processInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName)
+            return; // For Debug
+            if (!IsAdministrator())
             {
-                Verb = "runas",
-                UseShellExecute = true
-            };
-            Process.Start(processInfo);
+                var processInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName)
+                {
+                    Verb = "runas",
+                    UseShellExecute = true
+                };
+                Process.Start(processInfo);
+                Application.Current.Shutdown();
+            }
         }
 
         private void LoadEnvVars()
@@ -195,12 +199,29 @@ namespace EnvVarViewer
             if (EnvVarListBox.SelectedItem != null)
             {
                 string selectedVar = EnvVarListBox.SelectedItem.ToString();
-                if (userEnvVars.ContainsKey(selectedVar) || systemEnvVars.ContainsKey(selectedVar) || modifiedEnvVars.ContainsKey(selectedVar))
+                if (systemEnvVars.ContainsKey(selectedVar) || userEnvVars.ContainsKey(selectedVar) || modifiedEnvVars.ContainsKey(selectedVar))
                 {
-                    string value = modifiedEnvVars.ContainsKey(selectedVar) ? modifiedEnvVars[selectedVar] :
-                                   userEnvVars.ContainsKey(selectedVar) ? userEnvVars[selectedVar] : systemEnvVars[selectedVar];
+                    string value;
+                    string source;
+
+                    if (systemEnvVars.ContainsKey(selectedVar))
+                    {
+                        value = systemEnvVars[selectedVar];
+                        source = "System";
+                    }
+                    else if (userEnvVars.ContainsKey(selectedVar))
+                    {
+                        value = userEnvVars[selectedVar];
+                        source = "User";
+                    }
+                    else
+                    {
+                        value = modifiedEnvVars[selectedVar];
+                        source = "Modified";
+                    }
+
                     Clipboard.SetText(value);
-                    StatusLabel.Text = $"Copied {selectedVar} to clipboard";
+                    StatusLabel.Text = $"Copied {selectedVar} ({source}) to clipboard";
                 }
                 else
                 {
@@ -209,13 +230,37 @@ namespace EnvVarViewer
             }
         }
 
+        private void EnvVarTreeView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var selectedItem = EnvVarTreeView.SelectedItem;
+            if (selectedItem is KeyValuePair<string, string> keyValuePair)
+            {
+                string source = GetSource(keyValuePair.Key);
+                Clipboard.SetText(keyValuePair.Value);
+                StatusLabel.Text = $"Copied {keyValuePair.Key} ({source}) to clipboard";
+            }
+        }
+
+        private string GetSource(string key)
+        {
+            if (userEnvVars.ContainsKey(key))
+            {
+                return "User";
+            }
+            else if (systemEnvVars.ContainsKey(key))
+            {
+                return "System";
+            }
+            else if (modifiedEnvVars.ContainsKey(key))
+            {
+                return "Modified";
+            }
+            return "Unknown";
+        }
+
         private void AddButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!IsAdministrator())
-            {
-                Elevate();
-                Application.Current.Shutdown();
-            }
+            Elevate();
             var addWindow = new AddModifyEnvVarWindow(userEnvVars, systemEnvVars, modifiedEnvVars, deletedEnvVars);
             addWindow.EnvVarAdded += (s, ev) =>
             {
@@ -226,27 +271,23 @@ namespace EnvVarViewer
 
         private void ModifyButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!IsAdministrator())
-            {
-                Elevate();
-                Application.Current.Shutdown();
-            }
+            Elevate();
 
             if (EnvVarListBox.SelectedItem != null)
             {
                 string selectedVar = EnvVarListBox.SelectedItem.ToString();
-                if (selectedVar.ToLower() == "path")
-                {
-                    // Determine which TreeViewItem is selected
-                    var selectedNode = GetSelectedTreeViewNode();
-                    if (selectedNode != null)
-                    {
-                        bool isUserNode = selectedNode.Header.ToString() == "User";
-                        string pathValue = isUserNode ?
-                                           (userEnvVars.ContainsKey(selectedVar) ? userEnvVars[selectedVar] : null) :
-                                           (systemEnvVars.ContainsKey(selectedVar) ? systemEnvVars[selectedVar] : null);
+                var selectedNode = GetSelectedTreeViewNode();
 
-                        var modifyPathWindow = new ModifyPathWindow(pathValue, isUserNode);
+                if (selectedNode != null)
+                {
+                    bool isUserNode = selectedNode.Header.ToString() == "User";
+                    string value = isUserNode ?
+                                    (userEnvVars.ContainsKey(selectedVar) ? userEnvVars[selectedVar] : null) :
+                                    (systemEnvVars.ContainsKey(selectedVar) ? systemEnvVars[selectedVar] : null);
+
+                    if (selectedVar.ToLower() == "path")
+                    {
+                        var modifyPathWindow = new ModifyPathWindow(value, isUserNode);
                         modifyPathWindow.PathModified += (ss, se) =>
                         {
                             if (isUserNode)
@@ -263,45 +304,88 @@ namespace EnvVarViewer
                     }
                     else
                     {
-                        MessageBox.Show("Please select either 'User' or 'System' node in the TreeView to modify the PATH variable.");
+                        var modifyWindow = new AddModifyEnvVarWindow(userEnvVars, systemEnvVars, modifiedEnvVars, deletedEnvVars, selectedVar, value);
+                        modifyWindow.EnvVarModified += (s, ev) =>
+                        {
+                            UpdateListBox();
+                        };
+                        modifyWindow.ShowDialog();
                     }
                 }
                 else
                 {
-                    string value = modifiedEnvVars.ContainsKey(selectedVar) ? modifiedEnvVars[selectedVar] :
-                                   userEnvVars.ContainsKey(selectedVar) ? userEnvVars[selectedVar] : systemEnvVars[selectedVar];
-                    var modifyWindow = new AddModifyEnvVarWindow(userEnvVars, systemEnvVars, modifiedEnvVars, deletedEnvVars, selectedVar, value);
-                    modifyWindow.EnvVarModified += (s, ev) =>
+                    string value = (systemEnvVars.ContainsKey(selectedVar) ? systemEnvVars[selectedVar] : null);
+
+                    if (selectedVar.ToLower() == "path")
                     {
-                        UpdateListBox();
-                    };
-                    modifyWindow.ShowDialog();
+                        var modifyPathWindow = new ModifyPathWindow(value, false);
+                        modifyPathWindow.PathModified += (ss, se) =>
+                        {
+                            systemEnvVars[selectedVar] = modifyPathWindow.GetPathValue();
+                            UpdateListBox();
+                        };
+                        modifyPathWindow.ShowDialog();
+                    }
+                    else
+                    {
+                        var modifyWindow = new AddModifyEnvVarWindow(userEnvVars, systemEnvVars, modifiedEnvVars, deletedEnvVars, selectedVar, value);
+                        modifyWindow.EnvVarModified += (s, ev) =>
+                        {
+                            UpdateListBox();
+                        };
+                        modifyWindow.ShowDialog();
+                    }
                 }
             }
         }
 
         private TreeViewItem GetSelectedTreeViewNode()
         {
-            var selectedItem = EnvVarTreeView.SelectedItem as TreeViewItem;
-            if (selectedItem != null)
+            var selectedItem = EnvVarTreeView.SelectedItem;
+
+            if (selectedItem is TreeViewItem treeViewItem)
             {
-                // If the selected item is a child node, return its parent
-                if (selectedItem.Parent is TreeViewItem parentItem)
+                if (treeViewItem.Parent is TreeViewItem parentItem)
                 {
                     return parentItem;
                 }
-                return selectedItem;
+                return treeViewItem;
+            }
+            else if (selectedItem is KeyValuePair<string, string> keyValuePair)
+            {
+                var parentItem = GetParentTreeViewItem(keyValuePair);
+                return parentItem;
+            }
+
+            return null;
+        }
+
+        private TreeViewItem GetParentTreeViewItem(KeyValuePair<string, string> keyValuePair)
+        {
+            return FindParentTreeViewItem(keyValuePair);
+        }
+
+        private TreeViewItem FindParentTreeViewItem(KeyValuePair<string, string> keyValuePair)
+        {
+            foreach (var item in EnvVarTreeView.Items)
+            {
+                if (item is TreeViewItem treeViewItem)
+                {
+                    foreach (var child in treeViewItem.Items)
+                    {
+                        if (child is KeyValuePair<string, string> childKeyValuePair && childKeyValuePair.Equals(keyValuePair))
+                        {
+                            return treeViewItem;
+                        }
+                    }
+                }
             }
             return null;
         }
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!IsAdministrator())
-            {
-                Elevate();
-                Application.Current.Shutdown();
-            }
+            Elevate();
             if (EnvVarListBox.SelectedItem != null)
             {
                 string selectedVar = EnvVarListBox.SelectedItem.ToString();
