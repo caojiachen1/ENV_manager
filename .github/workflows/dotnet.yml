@@ -25,6 +25,11 @@ jobs:
     - name: Publish
       run: dotnet publish -c Release -o ./publish
 
+    - name: Generate Release Body
+      id: generate_release_body
+      run: |
+        echo "body=$(git log -1 --pretty=format:'%B')" >> $GITHUB_OUTPUT
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -33,9 +38,7 @@ jobs:
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
-        body: |
-          Changes in this release:
-          - ...
+        body: ${{ steps.generate_release_body.outputs.body }}
         draft: false
         prerelease: false
 
