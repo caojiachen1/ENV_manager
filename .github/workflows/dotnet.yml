@@ -17,13 +17,13 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore > /dev/null 2>&1
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore > /dev/null 2>&1
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --no-build --verbosity normal > /dev/null 2>&1
     - name: Publish
-      run: dotnet publish -c Release -o ./publish
+      run: dotnet publish -c Release -o ./publish > /dev/null 2>&1
 
     - name: Zip publish directory
       run: 7z a publish.zip ./publish/*
